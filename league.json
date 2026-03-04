@@ -1,0 +1,79 @@
+{
+  "teams": {
+    "frogs": {
+      "name": "frogs",
+      "captainId": "1031256636523827273",
+      "adminIds": [],
+      "memberIds": [
+        "1031256636523827273"
+      ],
+      "createdAt": "2026-02-06T03:09:09.525Z"
+    },
+    "giraffes": {
+      "name": "giraffes",
+      "captainId": "759065993711976499",
+      "adminIds": [],
+      "memberIds": [
+        "759065993711976499",
+        "759628285893935104"
+      ],
+      "createdAt": "2026-02-06T03:11:08.834Z"
+    },
+    "abyss": {
+      "name": "abyss",
+      "captainId": "759065993711976499",
+      "adminIds": [],
+      "memberIds": [
+        "759065993711976499"
+      ]
+    }
+  },
+  "invites": {},
+  "players": {
+    "759065993711976499": {
+      "ign": "gobbletycooked",
+      "registeredAt": "2026-02-09T00:05:34.669Z"
+    },
+    "1031256636523827273": {
+      "ign": "THE_CLOWN",
+      "registeredAt": "2026-02-06T03:10:18.106Z"
+    },
+    "759628285893935104": {
+      "ign": "Giraffemaster5",
+      "registeredAt": "2026-02-06T03:12:16.299Z"
+    }
+  },
+  "matchRequests": {
+    "matchreq_mlab8sa5_lzgapj": {
+      "id": "matchreq_mlab8sa5_lzgapj",
+      "teamAKey": "giraffes",
+      "teamAName": "giraffes",
+      "teamBKey": "frogs",
+      "teamBName": "frogs",
+      "day": "Friday",
+      "time": "8pm",
+      "timezone": "EST",
+      "requestedBy": "759065993711976499",
+      "status": "accepted",
+      "createdAt": "2026-02-06T03:13:06.605Z",
+      "resolvedAt": "2026-02-06T03:14:29.239Z",
+      "resolvedBy": "759065993711976499"
+    },
+    "matchreq_mlabldba_g7u2x9": {
+      "id": "matchreq_mlabldba_g7u2x9",
+      "teamAKey": "giraffes",
+      "teamAName": "giraffes",
+      "teamBKey": "frogs",
+      "teamBName": "frogs",
+      "day": "Fri",
+      "time": "8pm",
+      "timezone": "EST",
+      "requestedBy": "759065993711976499",
+      "status": "accepted",
+      "createdAt": "2026-02-06T03:22:53.734Z",
+      "resolvedAt": "2026-02-06T03:23:34.778Z",
+      "resolvedBy": "759065993711976499"
+    }
+  },
+  "matches": {}
+}
