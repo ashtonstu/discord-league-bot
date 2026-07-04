@@ -297,9 +297,17 @@ function formatTeamRoster(db, team) {
 }
 
 function cleanUserLookup(raw) {
-  return String(raw || "")
-    .trim()
-    .replace(/[<@!>]/g, "");
+  const input = String(raw || "").trim();
+
+  // Accept Discord mentions like <@123456789012345678> and <@!123456789012345678>.
+  const mentionMatch = input.match(/^<@!?(\d{17,20})>$/);
+  if (mentionMatch) return mentionMatch[1];
+
+  // Accept raw Discord IDs.
+  if (/^\d{17,20}$/.test(input)) return input;
+
+  // Otherwise treat the input as an IGN.
+  return input;
 }
 
 function resolveTeamMember(db, team, rawTarget) {
@@ -308,12 +316,13 @@ function resolveTeamMember(db, team, rawTarget) {
 
   const memberIds = team.memberIds || [];
 
-  // Direct Discord ID lookup. This still works after the user leaves or is banned.
+  // Mention or direct Discord ID lookup. This still works after the user leaves or is banned
+  // as long as their ID is still stored in the team roster.
   if (/^\d{17,20}$/.test(lookup) && memberIds.includes(lookup)) {
     return {
       id: lookup,
       ign: db.players?.[lookup]?.ign || "IGN not registered",
-      matchedBy: "Discord ID",
+      matchedBy: rawTarget.includes("<@") ? "mention" : "Discord ID",
     };
   }
 
@@ -550,7 +559,7 @@ client.on(Events.MessageCreate, async (message) => {
 
       // kick <@user | user ID | IGN>
       if (sub === "kick") {
-        const rawTarget = parts.shift();
+        const rawTarget = parts.join(" ").trim();
         if (!rawTarget) {
           return message.reply(`❌ Usage: **${PREFIX}team kick <@user | user ID | IGN>**`);
         }
