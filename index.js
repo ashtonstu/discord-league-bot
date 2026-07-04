@@ -86,7 +86,7 @@ function helpEmbed(clientUser) {
           `• **${PREFIX}team accept <team name>**\n` +
           `• **${PREFIX}team decline <team name>**\n` +
           `• **${PREFIX}team leave**\n` +
-          `• **${PREFIX}team kick @user** *(captain/admin)*\n` +
+          `• **${PREFIX}team kick <@user | user ID | IGN>** *(captain/admin)*\n` +
           `• **${PREFIX}team transfer @user [team name]** *(captain; admins can target any team)*\n` +
           `• **${PREFIX}team promote @user [team name]** *(captain; admins can target any team)*\n` +
           `• **${PREFIX}team demote @user [team name]** *(captain; admins can target any team)*`,
@@ -123,6 +123,7 @@ function helpEmbed(clientUser) {
           `• **${PREFIX}register AtomicMegaFart**\n` +
           `• **${PREFIX}team create \"Elysium\"**\n` +
           `• **${PREFIX}team invite @Ash**\n` +
+          `• **${PREFIX}team kick 759628285893935104**\n` +
           `• **${PREFIX}match request \"Elysium\" Fri 8pm ET**\n` +
           `• **${PREFIX}match report match_ab12cd 2-1**\n` +
           `• **${PREFIX}standings**\n` +
@@ -290,9 +291,42 @@ function formatTeamRoster(db, team) {
       (team.adminIds || []).includes(id) ? "🛡️ Admin" : null,
     ].filter(Boolean);
 
-    return `• <@${id}> — **${ign}**${tags.length ? ` (${tags.join(", ")})` : ""}`;
+    return `• <@${id}> — **${ign}**${tags.length ? ` (${tags.join(", ")})` : ""} — ID: \`${id}\``;
   });
   return roster.length ? roster.join("\n") : "(no members)";
+}
+
+function cleanUserLookup(raw) {
+  return String(raw || "")
+    .trim()
+    .replace(/[<@!>]/g, "");
+}
+
+function resolveTeamMember(db, team, rawTarget) {
+  const lookup = cleanUserLookup(rawTarget);
+  if (!lookup) return null;
+
+  const memberIds = team.memberIds || [];
+
+  // Direct Discord ID lookup. This still works after the user leaves or is banned.
+  if (/^\d{17,20}$/.test(lookup) && memberIds.includes(lookup)) {
+    return {
+      id: lookup,
+      ign: db.players?.[lookup]?.ign || "IGN not registered",
+      matchedBy: "Discord ID",
+    };
+  }
+
+  // Registered IGN lookup for convenience.
+  const lowered = lookup.toLowerCase();
+  for (const id of memberIds) {
+    const ign = db.players?.[id]?.ign;
+    if (ign && ign.toLowerCase() === lowered) {
+      return { id, ign, matchedBy: "IGN" };
+    }
+  }
+
+  return null;
 }
 
 function findUsersTeamEntry(db, userId) {
@@ -514,8 +548,13 @@ client.on(Events.MessageCreate, async (message) => {
         return message.reply({ embeds: [e] });
       }
 
-      // kick @user
+      // kick <@user | user ID | IGN>
       if (sub === "kick") {
+        const rawTarget = parts.shift();
+        if (!rawTarget) {
+          return message.reply(`❌ Usage: **${PREFIX}team kick <@user | user ID | IGN>**`);
+        }
+
         const entry = findUsersTeamEntry(db, message.author.id);
         if (!entry) return message.reply("❌ You must be on a team.");
         const [_, team] = entry;
@@ -524,9 +563,13 @@ client.on(Events.MessageCreate, async (message) => {
           return message.reply("❌ Captain/admin only.");
         }
 
-        const target = message.mentions.users.first();
-        if (!target) return message.reply(`❌ Usage: **${PREFIX}team kick @user**`);
-        if (!(team.memberIds || []).includes(target.id)) return message.reply("❌ That user is not on your team.");
+        const target = resolveTeamMember(db, team, rawTarget);
+        if (!target) {
+          return message.reply(
+            "❌ I couldn’t find that player on your team. Try their Discord ID from `!team roster`, or their exact registered IGN."
+          );
+        }
+
         if (target.id === team.captainId && !isDiscordAdmin(message.member)) {
           return message.reply("❌ You can’t kick the captain. Transfer captain first.");
         }
@@ -535,13 +578,14 @@ client.on(Events.MessageCreate, async (message) => {
         team.adminIds = (team.adminIds || []).filter((id) => id !== target.id);
         saveDB(db);
 
+        const playerLabel = `${target.ign} (ID: ${target.id})`;
         await announce(
           message.guild,
           message.channel,
-          `👢 <@${target.id}> was removed from **${team.name}** by <@${message.author.id}>`
+          `👢 **${playerLabel}** was removed from **${team.name}** by <@${message.author.id}>`
         );
 
-        return message.reply("✅ Removed.");
+        return message.reply(`✅ Removed **${target.ign}** from **${team.name}**.`);
       }
 
       // invite @user
